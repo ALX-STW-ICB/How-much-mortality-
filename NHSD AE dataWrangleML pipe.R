@@ -460,19 +460,6 @@ df_pca_input <- df_filtered %>%
   select(deaths = `Discharge Destination — Died`) %>%
   bind_cols(numeric_filtered)
 
-
-numeric_filtered <- df_no_outliers %>%
-  select(where(is.numeric)) %>%
-  select_if(~ sum(!is.na(.)) > 10) %>%
-  select_if(~ sd(., na.rm = TRUE) > 0) %>%
-  select(-`Discharge Destination — Died`)  # avoid outcome leakage
-
-# Step 2: Combine with outcome and filter non-SaTH
-df_pca_input <- df_no_outliers %>%
-  filter(peer_group != "SaTH") %>%
-  select(deaths = `Discharge Destination — Died`) %>%
-  bind_cols(numeric_filtered)
-
 # Step 3: Build recipe: impute → normalize → PCA
 rec <- recipe(deaths ~ ., data = df_pca_input) %>%
   step_impute_median(all_predictors()) %>%
@@ -836,6 +823,7 @@ wait_plotly <- plot_ly(
 print(funnel_plotly)
 print(wait_plotly)
 # End of script
+
 
 
 
