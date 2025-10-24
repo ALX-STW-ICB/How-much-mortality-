@@ -619,12 +619,12 @@ wf <- workflow() %>%
 dcv <- vfold_cv(train, v = 5)
 
 # Define tuning parameter ranges and grid
-rf_params <- parameters(rf_spec) %>%
-  update(
-    mtry  = mtry(range = c(2, floor(sqrt(ncol(train) - 1)))), 
-    min_n = min_n(range = c(2, 10))
-  ) %>%
-  finalize(train)
+rf_params <- parameters(
+  list(
+    mtry = mtry(range = c(2, floor(sqrt(ncol(train) - 1)))),
+    min_n = min_unique(range = c(2, 10))
+  )
+)
 
 # Use a Latin hypercube grid for diversity
 grid_rf <- grid_max_entropy(rf_params, size = 10)
@@ -836,5 +836,6 @@ wait_plotly <- plot_ly(
 print(funnel_plotly)
 print(wait_plotly)
 # End of script
+
 
 
