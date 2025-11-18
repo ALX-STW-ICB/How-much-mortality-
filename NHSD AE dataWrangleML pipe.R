@@ -460,19 +460,6 @@ df_pca_input <- df_filtered %>%
   select(deaths = `Discharge Destination — Died`) %>%
   bind_cols(numeric_filtered)
 
-
-numeric_filtered <- df_no_outliers %>%
-  select(where(is.numeric)) %>%
-  select_if(~ sum(!is.na(.)) > 10) %>%
-  select_if(~ sd(., na.rm = TRUE) > 0) %>%
-  select(-`Discharge Destination — Died`)  # avoid outcome leakage
-
-# Step 2: Combine with outcome and filter non-SaTH
-df_pca_input <- df_no_outliers %>%
-  filter(peer_group != "SaTH") %>%
-  select(deaths = `Discharge Destination — Died`) %>%
-  bind_cols(numeric_filtered)
-
 # Step 3: Build recipe: impute → normalize → PCA
 rec <- recipe(deaths ~ ., data = df_pca_input) %>%
   step_impute_median(all_predictors()) %>%
@@ -619,12 +606,12 @@ wf <- workflow() %>%
 dcv <- vfold_cv(train, v = 5)
 
 # Define tuning parameter ranges and grid
-rf_params <- parameters(rf_spec) %>%
-  update(
-    mtry  = mtry(range = c(2, floor(sqrt(ncol(train) - 1)))), 
-    min_n = min_n(range = c(2, 10))
-  ) %>%
-  finalize(train)
+rf_params <- parameters(
+  list(
+    mtry = mtry(range = c(2, floor(sqrt(ncol(train) - 1)))),
+    min_n = min_unique(range = c(2, 10))
+  )
+)
 
 # Use a Latin hypercube grid for diversity
 grid_rf <- grid_max_entropy(rf_params, size = 10)
@@ -836,5 +823,7 @@ wait_plotly <- plot_ly(
 print(funnel_plotly)
 print(wait_plotly)
 # End of script
+
+
 
 
